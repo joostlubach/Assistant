@@ -346,7 +346,7 @@ public func ==(lhs: Tooltip, rhs: Tooltip) -> Bool {
   return lhs.name == rhs.name
 }
 
-private let SeenTooltipsUserDefaultKey = "co.mosdev.MDKit.SeenTooltips"
+private let SeenTooltipsUserDefaultKey = "co.mosdev.Assistant.SeenTooltips"
 
 private var SeenTooltipsUserDefault: [String: Bool] {
   get {
