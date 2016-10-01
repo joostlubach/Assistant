@@ -5,13 +5,13 @@
 import Foundation
 
 /// Weak, unordered collection of objects.
-struct WeakSet<T where T: AnyObject, T: Hashable> {
+struct WeakSet<T> where T: AnyObject, T: Hashable {
   typealias Element = T
 
   /// Maps Element hashValues to arrays of Entry objects.
   /// Invalid Entry instances are culled as a side effect of add() and remove()
   /// when they touch an object with the same hashValue.
-  private var contents: [Int: [Entry<Element>]] = [:]
+  fileprivate var contents: [Int: [Entry<Element>]] = [:]
 
   init(_ objects: T...) {
     self.init(objects)
@@ -30,7 +30,7 @@ struct WeakSet<T where T: AnyObject, T: Hashable> {
   }
 
   /// Add an element to the set.
-  mutating func insert(newElement: Element) {
+  mutating func insert(_ newElement: Element) {
     var entriesAtHash = validEntriesAtHash(newElement.hashValue)
     var found = false
     for entry in entriesAtHash {
@@ -50,7 +50,7 @@ struct WeakSet<T where T: AnyObject, T: Hashable> {
   }
 
   /// Remove an element from the set.
-  mutating func remove(removeElement: Element) {
+  mutating func remove(_ removeElement: Element) {
     let entriesAtHash = validEntriesAtHash(removeElement.hashValue)
     let entriesMinusElement = entriesAtHash.filter { $0.element != removeElement }
     if entriesMinusElement.isEmpty {
@@ -62,7 +62,7 @@ struct WeakSet<T where T: AnyObject, T: Hashable> {
   }
 
   // Does the set contain this element?
-  func contains(element: Element) -> Bool {
+  func contains(_ element: Element) -> Bool {
     let entriesAtHash = validEntriesAtHash(element.hashValue)
     for entry in entriesAtHash {
       if entry.element == element {
@@ -72,7 +72,7 @@ struct WeakSet<T where T: AnyObject, T: Hashable> {
     return false
   }
 
-  private func validEntriesAtHash(hashValue: Int) -> [Entry<Element>] {
+  private func validEntriesAtHash(_ hashValue: Int) -> [Entry<Element>] {
     if let entries = contents[hashValue] {
       return entries.filter {
         $0.element != nil
@@ -84,7 +84,7 @@ struct WeakSet<T where T: AnyObject, T: Hashable> {
   }
 }
 
-private struct Entry<T where T: AnyObject, T: Hashable> {
+private struct Entry<T> where T: AnyObject, T: Hashable {
   typealias Element = T
   weak var element: Element?
 }
@@ -92,21 +92,21 @@ private struct Entry<T where T: AnyObject, T: Hashable> {
 
 // MARK: SequenceType
 
-extension WeakSet : SequenceType {
-  typealias Generator = AnyGenerator<T>
+extension WeakSet : Sequence {
+  typealias Iterator = AnyIterator<T>
 
   /// Creates a generator for the items of the set.
-  func generate() -> Generator {
+  func makeIterator() -> Iterator {
     // This is not straightforward because we need to iterate over the arrays and then their contents.
-    var contentsGenerator = contents.values.generate()         // generates arrays of entities
-    var entryGenerator = contentsGenerator.next()?.generate()  // generates entries
-    return anyGenerator {
+    var contentsGenerator = contents.values.makeIterator()         // generates arrays of entities
+    var entryGenerator = contentsGenerator.next()?.makeIterator()  // generates entries
+    return AnyIterator {
       // Note: If entryGenerator is nil, the party is over. No more.
       if let element = entryGenerator?.next()?.element {
         return element
       }
       else { // Ran out of entities in this array. Get the next one, if there is one.
-        entryGenerator = contentsGenerator.next()?.generate()
+        entryGenerator = contentsGenerator.next()?.makeIterator()
         return entryGenerator?.next()?.element
       }
     }

@@ -2,15 +2,15 @@ import UIKit
 
 /// Represents one tooltip. Tooltips can be displayed using `TooltipView`. This class handles content
 /// and invalidation.
-public class Tooltip {
+open class Tooltip {
 
   // MARK: - Types
 
   /// Determines how the tooltip is aligned to its target.
   public enum Alignment {
-    case None
-    case Top, Bottom
-    case Left, Right
+    case none
+    case top, bottom
+    case left, right
   }
 
 
@@ -39,10 +39,10 @@ public class Tooltip {
   // MARK: Properties
 
   /// The name of the tooltip.
-  public let name: String
+  open let name: String
 
   /// A list of tooltips which first have to have been marked as seen before this tooltip shows.
-  public var showAfter: Set<Tooltip> {
+  open var showAfter: Set<Tooltip> {
     get { return Set(_showAfter) }
     set { _showAfter = WeakSet(newValue) }
   }
@@ -50,7 +50,7 @@ public class Tooltip {
   private var _showAfter: WeakSet<Tooltip>
 
   /// A list of tooltips that are also marked as seen when this one is marked as seen.
-  public var bundleWith: Set<Tooltip> {
+  open var bundleWith: Set<Tooltip> {
     get { return Set(_bundleWith) }
     set { _bundleWith = WeakSet(newValue) }
   }
@@ -59,8 +59,8 @@ public class Tooltip {
   private var _bundleWith: WeakSet<Tooltip>
 
   /// The alignment of the tooltip (i.e. where is it placed relative to its target).
-  public var alignment: Alignment {
-    return .None
+  open var alignment: Alignment {
+    return .none
   }
 
   /// Gets the anchor point (the point of the tip of the arrow) relative to the top-left coordinate of a
@@ -68,18 +68,18 @@ public class Tooltip {
   ///
   /// - parameter size: The size of the tooltip.
   /// - returns:    The anchor point.
-  public func anchorPointForSize(size: CGSize) -> CGPoint {
+  open func anchorPointForSize(_ size: CGSize) -> CGPoint {
     switch alignment {
-    case .None:
-      return CGPointMake(size.width / 2, size.height / 2)
-    case .Top:
-      return CGPointMake(size.width / 2, size.height)
-    case .Bottom:
-      return CGPointMake(size.width / 2, 0)
-    case .Left:
-      return CGPointMake(size.width, size.height / 2)
-    case .Right:
-      return CGPointMake(0, size.height / 2)
+    case .none:
+      return CGPoint(x: size.width / 2, y: size.height / 2)
+    case .top:
+      return CGPoint(x: size.width / 2, y: size.height)
+    case .bottom:
+      return CGPoint(x: size.width / 2, y: 0)
+    case .left:
+      return CGPoint(x: size.width, y: size.height / 2)
+    case .right:
+      return CGPoint(x: 0, y: size.height / 2)
     }
   }
 
@@ -88,17 +88,17 @@ public class Tooltip {
   // MARK: - Tooltip static interface
 
   /// Provides a block that creates a view for a tooltip.
-  public static var viewForTooltip: ((Tooltip) -> TooltipView)!
+  open static var viewForTooltip: ((Tooltip) -> TooltipView)!
 
   // MARK: - Invalidation
 
   /// Determines whether this tooltip has already been seen. If so, it will not be added.
-  public var seen: Bool {
+  open var seen: Bool {
     return SeenTooltipsUserDefault[name] ?? false
   }
 
   /// Determines whether this tooltip should be shown.
-  public var shouldShow: Bool {
+  open var shouldShow: Bool {
     if seen {
       return false
     } else {
@@ -110,7 +110,7 @@ public class Tooltip {
   }
 
   /// Marks this tooltip as seen. It will immediately be removed.
-  public func markAsSeen() {
+  open func markAsSeen() {
     SeenTooltipsUserDefault[name] = true
     for tooltip in bundleWith {
       SeenTooltipsUserDefault[tooltip.name] = true
@@ -120,7 +120,7 @@ public class Tooltip {
   }
 
   /// Marks this tooltip as unseen. It may reappear as a result.
-  public func markAsUnseen() {
+  open func markAsUnseen() {
     SeenTooltipsUserDefault[name] = nil
     for tooltip in bundleWith {
       SeenTooltipsUserDefault[tooltip.name] = nil
@@ -130,7 +130,7 @@ public class Tooltip {
   }
 
   /// Marks all tooltips as unseen, i.e. 'resets' the tooltips.
-  public static func markAllAsUnseen() {
+  open static func markAllAsUnseen() {
     SeenTooltipsUserDefault = [:]
     Tooltip.setNeedsUpdate()
   }
@@ -147,13 +147,13 @@ public class Tooltip {
   /// or until the provider is removed.
   ///
   /// Typically, a provider is a `UIViewController`, which is added in `viewWillAppear(animated:)` and removed in `viewDidDisappear(animated:)`.
-  public static func addProvider<T: TooltipProvider where T: NSObject>(provider: T) {
+  open static func addProvider<T: TooltipProvider>(_ provider: T) where T: NSObject {
     providers.insert(provider)
     setNeedsUpdate()
   }
 
   /// Removes a previously added tooltip provider. Its tooltips are immediately removed.
-  public static func removeProvider<T: TooltipProvider where T: NSObject>(provider: T) {
+  open static func removeProvider<T: TooltipProvider>(_ provider: T) where T: NSObject {
     providers.remove(provider)
     setNeedsUpdate()
   }
@@ -181,19 +181,19 @@ public class Tooltip {
   private static var needsLayout = false
 
   /// Call this when tooltips need to be updated.
-  public static func setNeedsUpdate() {
+  open static func setNeedsUpdate() {
     needsUpdate = true
     needsLayout = true
-    dispatch_async(dispatch_get_main_queue(), Tooltip.updateIfNeeded)
+    DispatchQueue.main.async(execute: Tooltip.updateIfNeeded)
   }
 
-  public static func setNeedsLayout() {
+  open static func setNeedsLayout() {
     needsLayout = true
-    dispatch_async(dispatch_get_main_queue(), Tooltip.layoutIfNeeded)
+    DispatchQueue.main.async(execute: Tooltip.layoutIfNeeded)
   }
 
   /// Updates the tooltips if this is needed.
-  public static func updateIfNeeded() {
+  open static func updateIfNeeded() {
     if needsUpdate {
       needsUpdate = false
       update()
@@ -201,7 +201,7 @@ public class Tooltip {
   }
 
   /// Lays out the tooltips if needed.
-  public static func layoutIfNeeded() {
+  open static func layoutIfNeeded() {
     if needsLayout {
       needsLayout = false
       layout()
@@ -224,7 +224,7 @@ public class Tooltip {
 
     // Check which assignments to remove.
     for (assignment, _) in currentAssignments {
-      if newAssignments.indexOf(assignment) == nil {
+      if newAssignments.index(of: assignment) == nil {
         remove.append(assignment)
       }
     }
@@ -253,10 +253,10 @@ public class Tooltip {
   // MARK: Views
 
   /// The view class to use when showing tooltips. Override to provide a custom class.
-  public static var tooltipViewClass = TooltipView.self
+  open static var tooltipViewClass = TooltipView.self
 
   /// Creates a view for the given assignment.
-  private static func createViewForAssignment(assignment: TooltipAssignment) -> TooltipView {
+  private static func createViewForAssignment(_ assignment: TooltipAssignment) -> TooltipView {
     precondition(viewForTooltip != nil, "You need to provide a TooltipView creation block")
 
     let view = viewForTooltip(assignment.tooltip)
@@ -270,7 +270,7 @@ public class Tooltip {
   }
 
   /// Obtains all views for this tooltip that were provided by the given provider.
-  public func viewsForProvider(provider: TooltipProvider) -> [TooltipView] {
+  open func viewsForProvider(_ provider: TooltipProvider) -> [TooltipView] {
     var views = [TooltipView]()
 
     for (assignment, view) in Tooltip.currentAssignments {
@@ -285,14 +285,14 @@ public class Tooltip {
   // MARK: Animations
 
   /// Suspends animations for all current tooltips.
-  public static func suspendAnimations() {
+  open static func suspendAnimations() {
     for (_, view) in currentAssignments {
       view.suspendAnimations()
     }
   }
 
   /// Suspends all tooltip animations that are visible.
-  public static func resumeAnimations() {
+  open static func resumeAnimations() {
     for (_, view) in currentAssignments {
       view.resumeAnimations()
     }
@@ -318,8 +318,8 @@ public class Tooltip {
   static func addObserver() {
     observer = ApplicationObserver()
 
-    let notificationCenter = NSNotificationCenter.defaultCenter()
-    notificationCenter.addObserver(observer, selector: "applicationDidBecomeActive", name: UIApplicationDidBecomeActiveNotification, object: nil)
+    let notificationCenter = NotificationCenter.default
+    notificationCenter.addObserver(observer, selector: #selector(ApplicationObserver.applicationDidBecomeActive), name: NSNotification.Name.UIApplicationDidBecomeActive, object: nil)
   }
 
   static func removeObserver() {
@@ -327,7 +327,7 @@ public class Tooltip {
       return
     }
 
-    let notificationCenter = NSNotificationCenter.defaultCenter()
+    let notificationCenter = NotificationCenter.default
     notificationCenter.removeObserver(observer)
     observer = nil
   }
@@ -350,11 +350,11 @@ private let SeenTooltipsUserDefaultKey = "co.mosdev.Assistant.SeenTooltips"
 
 private var SeenTooltipsUserDefault: [String: Bool] {
   get {
-    let userDefaults = NSUserDefaults.standardUserDefaults()
-    return (userDefaults.dictionaryForKey(SeenTooltipsUserDefaultKey) as? [String: Bool]) ?? [:]
+    let userDefaults = UserDefaults.standard
+    return (userDefaults.dictionary(forKey: SeenTooltipsUserDefaultKey) as? [String: Bool]) ?? [:]
   }
   set {
-    let userDefaults = NSUserDefaults.standardUserDefaults()
-    userDefaults.setObject(newValue, forKey: SeenTooltipsUserDefaultKey)
+    let userDefaults = UserDefaults.standard
+    userDefaults.set(newValue, forKey: SeenTooltipsUserDefaultKey)
   }
 }

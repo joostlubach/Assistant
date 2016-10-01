@@ -1,11 +1,11 @@
 import UIKit
 
 /// View displaying a tooltip.
-public class TooltipView: UIView {
+open class TooltipView: UIView {
 
   public required init(tooltip: Tooltip) {
     self.tooltip = tooltip
-    super.init(frame: CGRectZero)
+    super.init(frame: CGRect.zero)
 
     setup()
   }
@@ -14,27 +14,27 @@ public class TooltipView: UIView {
   }
 
   /// The tooltip to display.
-  public let tooltip: Tooltip
+  open let tooltip: Tooltip
 
   /// The target of the tooltip.
-  public internal(set) var target: TooltipTarget!
+  open internal(set) var target: TooltipTarget!
 
   /// The spacing of this assignment.
-  public var spacing: CGFloat = 0
+  open var spacing: CGFloat = 0
 
   /// Whether or not to enable hovering for this view.
-  public var hoverEnabled = false
+  open var hoverEnabled = false
 
   /// Whether or not to enable show/hide animations for this view.
-  public var showHideAnimationEnabled = false
+  open var showHideAnimationEnabled = false
 
-  public lazy var tapRecognizer: UITapGestureRecognizer = UITapGestureRecognizer(target: self, action: "tap")
+  open lazy var tapRecognizer: UITapGestureRecognizer = UITapGestureRecognizer(target: self, action: #selector(TooltipView.tap))
 
   // MARK: Setup
 
-  public func setup() {
+  open func setup() {
     addGestureRecognizer(tapRecognizer)
-    hidden = true
+    isHidden = true
   }
 
   func tap() {
@@ -48,7 +48,7 @@ public class TooltipView: UIView {
     precondition(superview != nil)
     precondition(target != nil, "You cannot add TooltipViews yourself. Use a TooltipProvider instead.")
 
-    bounds.size.width = UIScreen.mainScreen().bounds.width
+    bounds.size.width = UIScreen.main.bounds.width
     sizeToFit()
 
     let anchorPoint = tooltip.anchorPointForSize(bounds.size)
@@ -58,7 +58,7 @@ public class TooltipView: UIView {
     center.x = alignmentPoint.x - anchorPoint.x + bounds.width / 2
     center.y = alignmentPoint.y - anchorPoint.y + bounds.height / 2
 
-    if hidden {
+    if isHidden {
       show()
     }
   }
@@ -69,51 +69,51 @@ public class TooltipView: UIView {
   func show() {
     if showHideAnimationEnabled {
       alpha = 0
-      transform = CGAffineTransformMakeScale(0.8, 0.8)
-      hidden = false
+      transform = CGAffineTransform(scaleX: 0.8, y: 0.8)
+      isHidden = false
 
-      let options = UIViewAnimationOptions(rawValue: UInt(UIViewAnimationCurve.EaseInOut.rawValue))
-      UIView.animateWithDuration(0.1, delay: 0.0, options: options, animations: {
+      let options = UIViewAnimationOptions(rawValue: UInt(UIViewAnimationCurve.easeInOut.rawValue))
+      UIView.animate(withDuration: 0.1, delay: 0.0, options: options, animations: {
         self.alpha = 1.0
-        self.transform = CGAffineTransformIdentity
+        self.transform = CGAffineTransform.identity
       }, completion: { done in
         if done {
           self.resumeAnimations()
         }
       })
     } else {
-      hidden = false
+      isHidden = false
       resumeAnimations()
     }
   }
 
   /// Hides this tooltip view, and subsequently removes it.
-  public func remove() {
+  open func remove() {
     if showHideAnimationEnabled {
-      let options = UIViewAnimationOptions(rawValue: UInt(UIViewAnimationCurve.EaseInOut.rawValue))
-      UIView.animateWithDuration(0.1, delay: 0.0, options: options, animations: {
+      let options = UIViewAnimationOptions(rawValue: UInt(UIViewAnimationCurve.easeInOut.rawValue))
+      UIView.animate(withDuration: 0.1, delay: 0.0, options: options, animations: {
         self.alpha = 0
-        self.transform = CGAffineTransformMakeScale(0.8, 0.8)
+        self.transform = CGAffineTransform(scaleX: 0.8, y: 0.8)
         }, completion: { _ in
-          self.hidden = true
+          self.isHidden = true
           self.removeFromSuperview()
       })
     } else {
-      hidden = true
+      isHidden = true
       removeFromSuperview()
     }
   }
 
   // MARK: Animations
 
-  public func suspendAnimations() {
-    if layer.animationForKey("hover") != nil {
+  open func suspendAnimations() {
+    if layer.animation(forKey: "hover") != nil {
       stopHover()
     }
   }
 
-  public func resumeAnimations() {
-    if hoverEnabled && layer.animationForKey("hover") == nil {
+  open func resumeAnimations() {
+    if hoverEnabled && layer.animation(forKey: "hover") == nil {
       startHover()
     }
   }
@@ -127,18 +127,18 @@ public class TooltipView: UIView {
     animation.repeatCount = Float.infinity
     animation.timingFunction = CAMediaTimingFunction(name: kCAMediaTimingFunctionEaseInEaseOut)
     animation.autoreverses = true
-    animation.fromValue = NSValue(CGSize: CGSizeZero)
-    animation.toValue = NSValue(CGSize: tooltip.hoverOffset)
+    animation.fromValue = NSValue(cgSize: CGSize.zero)
+    animation.toValue = NSValue(cgSize: tooltip.hoverOffset)
 
     // Start the animation at random between 0 and 1.000.000 µs.
-    let randomDelay = Double(rand() % 1000) / 1000
+    let randomDelay = Double(arc4random() % 1000) / 1000
     animation.beginTime = CACurrentMediaTime() + randomDelay
 
-    layer.addAnimation(animation, forKey: "hover")
+    layer.add(animation, forKey: "hover")
   }
 
   private func stopHover() {
-    layer.removeAnimationForKey("hover")
+    layer.removeAnimation(forKey: "hover")
   }
 
 }
@@ -148,11 +148,11 @@ extension Tooltip {
   /// The offset of the hover animation for a tooltip using this alignment.
   var hoverOffset: CGSize {
     switch alignment {
-    case .None: return CGSizeZero
-    case .Top: return CGSizeMake(0, 2)
-    case .Bottom: return CGSizeMake(0, -2)
-    case .Left: return CGSizeMake(2, 0)
-    case .Right: return CGSizeMake(-2, 0)
+    case .none: return CGSize.zero
+    case .top: return CGSize(width: 0, height: 2)
+    case .bottom: return CGSize(width: 0, height: -2)
+    case .left: return CGSize(width: 2, height: 0)
+    case .right: return CGSize(width: -2, height: 0)
     }
   }
 
@@ -161,18 +161,18 @@ extension Tooltip {
   /// - parameter rect:    The target rect.
   /// - parameter spacing: The space between the target view and the tooltip.
   /// - returns:       The alignment point.
-  func alignmentPointForTargetRect(rect: CGRect, spacing: CGFloat) -> CGPoint {
+  func alignmentPointForTargetRect(_ rect: CGRect, spacing: CGFloat) -> CGPoint {
     switch alignment {
-    case .None:
-      return CGPointMake(rect.midX, rect.midY)
-    case .Top:
-      return CGPointMake(rect.midX, rect.minY - spacing)
-    case .Bottom:
-      return CGPointMake(rect.midX, rect.maxY + spacing)
-    case .Left:
-      return CGPointMake(rect.minX - spacing, rect.midY)
-    case .Right:
-      return CGPointMake(rect.maxX + spacing, rect.midY)
+    case .none:
+      return CGPoint(x: rect.midX, y: rect.midY)
+    case .top:
+      return CGPoint(x: rect.midX, y: rect.minY - spacing)
+    case .bottom:
+      return CGPoint(x: rect.midX, y: rect.maxY + spacing)
+    case .left:
+      return CGPoint(x: rect.minX - spacing, y: rect.midY)
+    case .right:
+      return CGPoint(x: rect.maxX + spacing, y: rect.midY)
     }
   }
 

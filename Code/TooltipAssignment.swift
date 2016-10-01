@@ -1,7 +1,7 @@
 import UIKit
 
 /// An assignment of a tooltip to some target.
-public class TooltipAssignment {
+open class TooltipAssignment {
 
   /// Initializes a new tooltip assignment.
   init(tooltip: Tooltip, provider: TooltipProvider, target: TooltipTarget, spacing: CGFloat? = nil) {
@@ -18,16 +18,16 @@ public class TooltipAssignment {
   }
 
   /// The tooltip itself.
-  public let tooltip: Tooltip
+  open let tooltip: Tooltip
 
   /// The provider providing this assignment.
-  public let provider: TooltipProvider
+  open let provider: TooltipProvider
 
   /// The target of the tooltip.
-  public let target: TooltipTarget
+  open let target: TooltipTarget
 
   /// The spacing between the tooltip and the target. If `nil`, a default spacing is used.
-  public var spacing: CGFloat?
+  open var spacing: CGFloat?
 
   // MARK: - Auto-invalidation
 
@@ -35,13 +35,13 @@ public class TooltipAssignment {
 
   private func setupAutoInvalidation() {
     if let button = target.targetButton {
-      button.addTarget(invalidationTarget, action: "invalidate", forControlEvents: .TouchUpInside)
+      button.addTarget(invalidationTarget, action: #selector(InvalidationTarget.invalidate), for: .touchUpInside)
     }
   }
 
   private func tearDownAutoInvalidation() {
     if let button = target.targetButton {
-      button.removeTarget(invalidationTarget, action: "invalidate", forControlEvents: .TouchUpInside)
+      button.removeTarget(invalidationTarget, action: #selector(InvalidationTarget.invalidate), for: .touchUpInside)
     }
   }
   
@@ -95,21 +95,21 @@ class InvalidationTarget: NSObject {
 public enum TooltipTarget {
 
   /// The tooltip is assigned to a button. When the button is tapped, the tooltip is invalidated.
-  case Button(UIButton)
+  case button(UIButton)
 
   /// The tooltip is attached to some arbitrary view. The tooltip has to be manually invalidated.
-  case View(UIView)
+  case view(UIView)
 
   /// The tooltip is attached to some arbitrary rect. The tooltip has to be manually invalidated.
-  case Rect(CGRect)
+  case rect(CGRect)
 
   /// The tooltip is attached to some rect that might change. The block is invoked at every layout pass.
-  case DynamicRect(() -> CGRect)
+  case dynamicRect(() -> CGRect)
 
   /// The target button, if any.
   var targetButton: UIButton? {
     switch self {
-    case let .Button(button): return button
+    case let .button(button): return button
     default: return nil
     }
   }
@@ -117,23 +117,23 @@ public enum TooltipTarget {
   /// The target view, if any.
   var targetView: UIView? {
     switch self {
-    case let .Button(button): return button
-    case let .View(view): return view
+    case let .button(button): return button
+    case let .view(view): return view
     default: return nil
     }
   }
 
   /// The target rect, converted to the coordinate space of the given view, if possible.
-  func targetRectInView(referenceView: UIView) -> CGRect {
+  func targetRectInView(_ referenceView: UIView) -> CGRect {
     switch self {
-    case let .Button(button):
-      return button.convertRect(button.bounds, toView: referenceView)
-    case let .View(view):
-      return view.convertRect(view.bounds, toView: referenceView)
-    case let .Rect(rect):
+    case let .button(button):
+      return button.convert(button.bounds, to: referenceView)
+    case let .view(view):
+      return view.convert(view.bounds, to: referenceView)
+    case let .rect(rect):
       // Not possible to convert, just use the rect.
       return rect
-    case let .DynamicRect(block):
+    case let .dynamicRect(block):
       return block()
     }
   }
